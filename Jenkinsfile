@@ -22,7 +22,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'dockerhub-id', variable: 'DOCKERHUB_ID'),
+                        string(credentialsId: 'DOCKERHUB_ID', variable: 'DOCKERHUB_ID'),
                         usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')
                     ]) {
                         def imageName = "${DOCKERHUB_ID}/email:${env.BUILD_NUMBER}"
@@ -38,10 +38,11 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'dockerhub-id', variable: 'DOCKERHUB_ID'),
-                        string(credentialsId: 'ec2-ip', variable: 'EC2_IP')
+                        sshUserPrivateKey(credentialsId: 'SSH_KEY_PATH', keyFileVariable: 'SSH_KEY'),
+                        string(credentialsId: 'DOCKERHUB_ID', variable: 'DOCKERHUB_ID'),
+                        string(credentialsId: 'ec2_ip', variable: 'EC2_IP')
                     ]) {
-                        sh "ssh -i key.pem ubuntu@${EC2_IP} \"docker pull ${DOCKERHUB_ID}/email && docker restart spring-container\""
+                        sh "ssh -i ${SSH_KEY} ubuntu@${EC2_IP} \"docker pull ${DOCKERHUB_ID}/email && docker restart spring-container\""
                     }
                 }
             }
