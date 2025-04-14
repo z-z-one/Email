@@ -42,11 +42,19 @@ pipeline {
                         string(credentialsId: 'DOCKERHUB_ID', variable: 'DOCKERHUB_ID'),
                         string(credentialsId: 'ec2_ip', variable: 'EC2_IP')
                     ]) {
-                        sh "ssh -i ${SSH_KEY} ubuntu@${EC2_IP} \"docker pull ${DOCKERHUB_ID}/email && docker restart spring-container\""
+                        sh """
+                        ssh -i ${SSH_KEY} ubuntu@${EC2_IP} '
+                          docker pull ${DOCKERHUB_ID}/email:${env.BUILD_NUMBER} &&
+                          docker stop spring-container || true &&
+                          docker rm spring-container || true &&
+                          docker run -d --name spring-container -p 8080:8080 ${DOCKERHUB_ID}/email:${env.BUILD_NUMBER}
+                        '
+                        """
                     }
                 }
             }
         }
+
     }
 
     post {
