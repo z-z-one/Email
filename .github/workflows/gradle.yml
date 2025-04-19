@@ -3,8 +3,6 @@ name: CI/CD using github actions & docker
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
@@ -32,8 +30,8 @@ jobs:
     - name: Docker build & push to Docker hub
       run: |
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-        docker build -f docker/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/900pro:latest .
-        docker push ${{ secrets.DOCKER_USERNAME }}/900pro:latest
+        docker build -f docker/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/jiwon642/email:latest ../../..
+        docker push ${{ secrets.DOCKER_USERNAME }}/jiwon642/email:latest
 
     # EC2 배포
     - name: Docker image pull & Deploy to EC2
@@ -44,14 +42,12 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker pull ${{ secrets.DOCKER_USERNAME }}/900pro:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/jiwon642/email:latest
           docker stop $(docker ps -a -q)
           docker rm $(docker ps --filter 'status=exited' -a -q)
           docker run -d \
-            --env-file /home/ubuntu/.ssh/900pro-be/.env \
             --log-driver=syslog \
-            -p 8080:8080 \
-            --name myapp \
-            ${{ secrets.DOCKER_USERNAME }}/900pro:latest \
-            --spring.profiles.active=prod
+            -p 8080:9090 \
+            --name email \
+            ${{ secrets.DOCKER_USERNAME }}/jiwon642/email:latest \
           docker image prune -a -f
